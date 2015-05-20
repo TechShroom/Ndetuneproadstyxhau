@@ -58,6 +58,8 @@ dependencies {
     compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.0.2'
     compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.0.2'
     compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '4.7'
+    compile group: 'com.google.inject', name: 'guice', version: '3.0'
+    addAPTReqWComp group: 'org.ow2.asm', name: 'asm-debug-all', version: '5.0.3'
     addAPTReqWComp group: 'com.google.guava', name: 'guava', version: '18.0'
     addAPT group: 'com.google.auto.factory', name: 'auto-factory', version: '1.0-SNAPSHOT'
     addAPT group: 'com.google.auto.service', name: 'auto-service', version: '1.0-SNAPSHOT'
