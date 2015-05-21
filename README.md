@@ -1,7 +1,7 @@
 Ndetuneproadstyxhau
 ======
 
-Ndetuneproadstyxhau is a Java obfuscation tool. Can't pronounce the name? Neither can we!
+Ndetuneproadstyxhau is a Java obfuscation tool. Can't pronounce the name? [Neither can we!](https://gist.github.com/kenzierocks/1091046ed78f5d054dfb)
 
 ### Ok, but what's it do?
 It adds a duplicate method with a different return type for each method in a class, making it harder to compile against and de-obfuscate. That's pretty much it.
