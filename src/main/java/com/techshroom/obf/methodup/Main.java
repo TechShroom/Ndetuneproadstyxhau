@@ -107,6 +107,7 @@ public class Main {
         }
     }
 
+    @SuppressWarnings("resource")
     private static void transformDirectory(Path input, Path output,
             JarFile jarMetaData) {
         boolean jarIt = output.toString().endsWith(".jar");
