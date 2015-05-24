@@ -26,6 +26,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.techshroom.obf.methodup.transformer.Transformer;
 import com.techshroom.obf.methodup.transformer.TransformerProvider;
+import com.techshroom.obf.methodup.util.DestructionVisitor;
 
 /**
  * Main class for the obfuscator.
@@ -71,6 +72,14 @@ public class Main {
         OptionSet opts = PARSER.parse(args);
         List<Path> files = FILES.values(opts);
         if (files.size() != 2) {
+            if (files.size() != 0) {
+                System.err.println("Must provide 0 or 2 arguments.");
+                try {
+                    PARSER.printHelpOn(System.err);
+                } catch (IOException e) {
+                }
+                return;
+            }
             files = promptForFiles();
         }
         Path input = files.get(0);
@@ -84,17 +93,21 @@ public class Main {
                 Path tempDir = Files.createTempDirectory("tsobfin");
                 try (JarFile jar = new JarFile(input.toFile())) {
                     jar.stream().forEach(e -> {
+                        if (e.isDirectory()) {
+                            return;
+                        }
                         try {
+                            Path resolvedPath = tempDir.resolve(e.getName());
+                            Files.createDirectories(resolvedPath.getParent());
                             ByteStreams.copy(jar.getInputStream(e), Files
-                                    .newOutputStream(tempDir.resolve(e
-                                            .getName())));
+                                    .newOutputStream(resolvedPath));
                         } catch (Exception e1) {
                             throw Throwables.propagate(e1);
                         }
                     });
                     transformDirectory(tempDir, output, jar);
                 } finally {
-                    Files.deleteIfExists(tempDir);
+                    Files.walkFileTree(tempDir, new DestructionVisitor());
                 }
             } catch (Exception e) {
                 e.printStackTrace();

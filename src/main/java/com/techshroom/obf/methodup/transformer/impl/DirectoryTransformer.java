@@ -1,6 +1,7 @@
 package com.techshroom.obf.methodup.transformer.impl;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -33,6 +34,9 @@ final class DirectoryTransformer implements Transformer {
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
                 throws IOException {
             super.visitFile(file, attrs);
+            if (!file.toString().endsWith(".class")) {
+                return FileVisitResult.CONTINUE;
+            }
             Path absolutePath = file.toAbsolutePath();
             checkState(absolutePath.startsWith(this.in), "outside source");
             Path targetFile =
@@ -72,9 +76,7 @@ final class DirectoryTransformer implements Transformer {
         try {
             classSource = Files.readAllBytes(file);
             ClassReader reader = new ClassReader(classSource);
-            ClassWriter writer =
-                    new ClassWriter(ClassWriter.COMPUTE_FRAMES
-                            | ClassWriter.COMPUTE_MAXS);
+            ClassWriter writer = new ClassWriter(0);
             ClassVisitor classVisitor = new ClassVisitor(Opcodes.ASM5, writer) {
                 private static final String TARGET_RETURN = "V";
                 private static final String FALLBACK_RETURN = "I";
@@ -92,21 +94,31 @@ final class DirectoryTransformer implements Transformer {
                         // don't mess with init's
                         return methodWriter;
                     }
+                    boolean usingFallback = desc.equals(TARGET_RETURN);
                     MethodVisitor offPuttingMethodWriter =
                             super.visitMethod(access,
                                               name,
                                               getNonConflictingReturn(desc),
                                               signature,
                                               exceptions);
-                    MethodVisitor duplicator =
-                            new MethodVisitor(Opcodes.ASM5, methodWriter) {
+                    offPuttingMethodWriter =
+                            new MethodVisitor(Opcodes.ASM5,
+                                    offPuttingMethodWriter) {
                                 @Override
-                                public void visitEnd() {
-                                    super.visitEnd();
-                                    offPuttingMethodWriter.visitEnd();
+                                public void visitInsn(int opcode) {
+                                    boolean isReturn =
+                                            Opcodes.IRETURN <= opcode
+                                                    && opcode <= Opcodes.RETURN;
+                                    if (isReturn) {
+                                        opcode =
+                                                usingFallback ? Opcodes.IRETURN
+                                                             : Opcodes.RETURN;
+                                    }
+                                    super.visitInsn(opcode);
                                 }
                             };
-                    return duplicator;
+                    return SplitterMethodVisitor
+                            .resolve(methodWriter, offPuttingMethodWriter);
                 }
 
                 private String getNonConflictingReturn(String desc) {
@@ -119,6 +131,7 @@ final class DirectoryTransformer implements Transformer {
                 }
             };
             reader.accept(classVisitor, 0);
+            Files.createDirectories(targetFile.getParent());
             try (OutputStream stream = Files.newOutputStream(targetFile)) {
                 stream.write(writer.toByteArray());
             }
