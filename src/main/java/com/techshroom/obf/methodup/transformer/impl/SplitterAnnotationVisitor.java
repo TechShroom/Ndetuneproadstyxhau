@@ -10,7 +10,7 @@ final class SplitterAnnotationVisitor
 
     public static AnnotationVisitor resolve(AnnotationVisitor a,
             AnnotationVisitor b) {
-        if (a == null) {
+        if (a == null || a == b) {
             return b;
         } else if (b == null) {
             return a;

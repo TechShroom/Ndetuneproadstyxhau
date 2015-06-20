@@ -76,7 +76,7 @@ final class DirectoryTransformer implements Transformer {
         try {
             classSource = Files.readAllBytes(file);
             ClassReader reader = new ClassReader(classSource);
-            ClassWriter writer = new ClassWriter(0);
+            ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
             ClassVisitor classVisitor = new ClassVisitor(Opcodes.ASM5, writer) {
                 private static final String TARGET_RETURN = "V";
                 private static final String FALLBACK_RETURN = "I";
@@ -94,11 +94,12 @@ final class DirectoryTransformer implements Transformer {
                         // don't mess with init's
                         return methodWriter;
                     }
-                    boolean usingFallback = desc.equals(TARGET_RETURN);
+                    String ret = getNonConflictingReturn(desc);
+                    boolean usingFallback = ret.equals(FALLBACK_RETURN);
                     MethodVisitor offPuttingMethodWriter =
                             super.visitMethod(access,
                                               name,
-                                              getNonConflictingReturn(desc),
+                                              ret,
                                               signature,
                                               exceptions);
                     offPuttingMethodWriter =
@@ -110,9 +111,12 @@ final class DirectoryTransformer implements Transformer {
                                             Opcodes.IRETURN <= opcode
                                                     && opcode <= Opcodes.RETURN;
                                     if (isReturn) {
-                                        opcode =
-                                                usingFallback ? Opcodes.IRETURN
-                                                             : Opcodes.RETURN;
+                                        if (usingFallback) {
+                                            opcode = Opcodes.IRETURN;
+                                            super.visitLdcInsn(Integer.MAX_VALUE);
+                                        } else {
+                                            opcode = Opcodes.RETURN;
+                                        }
                                     }
                                     super.visitInsn(opcode);
                                 }

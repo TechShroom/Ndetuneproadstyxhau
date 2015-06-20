@@ -1,5 +1,6 @@
 package com.techshroom.obf.methodup;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.DirectoryStream;
@@ -13,6 +14,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 
+import joptsimple.ArgumentAcceptingOptionSpec;
 import joptsimple.NonOptionArgumentSpec;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -26,6 +28,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.techshroom.obf.methodup.transformer.Transformer;
 import com.techshroom.obf.methodup.transformer.TransformerProvider;
+import com.techshroom.obf.methodup.util.ClassPathHack;
 import com.techshroom.obf.methodup.util.DestructionVisitor;
 
 /**
@@ -59,6 +62,11 @@ public class Main {
 
     private static final NonOptionArgumentSpec<Path> FILES = PARSER
             .nonOptions("<input> <output>").withValuesConvertedBy(TOPATH);
+    private static final ArgumentAcceptingOptionSpec<Path> CLASSPATH = PARSER
+            .acceptsAll(ImmutableList.of("c", "cp", "classpath"),
+                        "classpath entries, use system path seperator")
+            .withRequiredArg().withValuesSeparatedBy(File.pathSeparatorChar)
+            .withValuesConvertedBy(TOPATH);
 
     private static final Module mainModule = new MainModule();
 
@@ -70,6 +78,7 @@ public class Main {
      */
     public static void main(String... args) {
         OptionSet opts = PARSER.parse(args);
+        addClassPathEntries(CLASSPATH.values(opts));
         List<Path> files = FILES.values(opts);
         if (files.size() != 2) {
             if (files.size() != 0) {
@@ -118,6 +127,10 @@ public class Main {
             throw new IllegalArgumentException(input
                     + " couldn't be scanned for classes");
         }
+    }
+
+    private static void addClassPathEntries(List<Path> values) {
+        values.forEach(ClassPathHack::addFile);
     }
 
     @SuppressWarnings("resource")
