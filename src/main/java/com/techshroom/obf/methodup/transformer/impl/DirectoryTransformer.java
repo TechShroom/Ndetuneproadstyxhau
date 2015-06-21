@@ -95,7 +95,7 @@ final class DirectoryTransformer implements Transformer {
                         return methodWriter;
                     }
                     String ret = getNonConflictingReturn(desc);
-                    boolean usingFallback = ret.equals(FALLBACK_RETURN);
+                    boolean usingFallback = ret.endsWith(FALLBACK_RETURN);
                     MethodVisitor offPuttingMethodWriter =
                             super.visitMethod(access,
                                               name,
@@ -105,17 +105,33 @@ final class DirectoryTransformer implements Transformer {
                     offPuttingMethodWriter =
                             new MethodVisitor(Opcodes.ASM5,
                                     offPuttingMethodWriter) {
+
+                                @Override
+                                public void visitMaxs(int maxStack,
+                                        int maxLocals) {
+                                    super.visitMaxs(0, 0);
+                                }
+
                                 @Override
                                 public void visitInsn(int opcode) {
                                     boolean isReturn =
                                             Opcodes.IRETURN <= opcode
                                                     && opcode <= Opcodes.RETURN;
+                                    boolean isVoidReturn =
+                                            opcode == Opcodes.RETURN;
                                     if (isReturn) {
-                                        if (usingFallback) {
+                                        checkState(isVoidReturn == usingFallback,
+                                                   "impossible state, report issue with code"
+                                                           + " (method %s; desc %s; file %s)",
+                                                   name,
+                                                   desc,
+                                                   file);
+                                        if (!usingFallback) {
                                             opcode = Opcodes.IRETURN;
                                             super.visitLdcInsn(Integer.MAX_VALUE);
                                         } else {
                                             opcode = Opcodes.RETURN;
+                                            super.visitInsn(Opcodes.POP);
                                         }
                                     }
                                     super.visitInsn(opcode);
@@ -128,6 +144,12 @@ final class DirectoryTransformer implements Transformer {
                 private String getNonConflictingReturn(String desc) {
                     String returnType =
                             Type.getReturnType(desc).getDescriptor();
+                    System.err.println(desc + "->" + returnType);
+                    System.err
+                            .println(desc.substring(0, desc.indexOf(')') + 1)
+                                    + (returnType.equals(TARGET_RETURN)
+                                                                       ? FALLBACK_RETURN
+                                                                       : TARGET_RETURN));
                     return desc.substring(0, desc.indexOf(')') + 1)
                             + (returnType.equals(TARGET_RETURN)
                                                                ? FALLBACK_RETURN
