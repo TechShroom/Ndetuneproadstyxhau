@@ -6,20 +6,19 @@ buildscript {
             url "https://oss.sonatype.org/content/repositories/snapshots/"
         }
         maven {
-            url "http://techshroom.github.io/downloads/maven"
+            url "https://plugins.gradle.org/m2/"
         }
     }
-    
+
     configurations.all {
         resolutionStrategy {
             cacheChangingModulesFor 0, 'seconds'
         }
     }
     dependencies {
-        classpath group: 'com.techshroom', name: 'Aversion', version: '1.0.1-SNAPSHOT'
+        classpath group: 'com.techshroom', name: 'Aversion', version: '3.0.1'
     }
 }
-ext.FTP_USER="ket1999"
 version = rootProject.version
 
 apply plugin: 'java'
@@ -35,6 +34,11 @@ util {
     javaVersion = '1.8'
 }
 
+mavencfg {
+    coords 'TechShroom', 'Ndetuneproadstyxhau'
+    description 'A simple Java obfuscator.'
+}
+
 repositories {
     mavenCentral()
     maven {
@@ -48,25 +52,26 @@ configurations.all {
      failOnVersionConflict()
 
      // force certain versions of dependencies (including transitive)
-     force 'com.google.auto.service:auto-service:1.0-SNAPSHOT', 'com.google.guava:guava:18.0',
-           'com.google.dagger:dagger:2.0', 'com.google.auto:auto-common:0.4'
+     force 'com.google.auto.service:auto-service:1.0-rc3', 'com.google.guava:guava:23.0',
+           'com.google.auto:auto-common:0.6',
+           'com.google.auto.value:auto-value:1.1'
 
      cacheDynamicVersionsFor 10, 'minutes'
      // don't cache changing modules at all
      cacheChangingModulesFor 0, 'seconds'
    }
 }
- 
+
 dependencies {
-    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.0.2'
-    compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.0.2'
-    compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '4.7'
-    compile group: 'com.google.inject', name: 'guice', version: '3.0'
-    addAPTReqWComp group: 'org.ow2.asm', name: 'asm-debug-all', version: '5.0.3'
-    addAPTReqWComp group: 'com.google.guava', name: 'guava', version: '18.0'
-    addAPT group: 'com.google.auto.factory', name: 'auto-factory', version: '1.0-SNAPSHOT'
-    addAPT group: 'com.google.auto.service', name: 'auto-service', version: '1.0-SNAPSHOT'
-    addAPT group: 'com.google.auto.value', name: 'auto-value', version: '1.2-SNAPSHOT'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.10.0'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.10.0'
+    compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '5.0.4'
+    compile group: 'com.google.inject', name: 'guice', version: '4.1.0'
+    addAPTReqWComp group: 'org.ow2.asm', name: 'asm-debug-all', version: '5.2'
+    addAPTReqWComp group: 'com.google.guava', name: 'guava', version: '23.0'
+    addAPT group: 'com.google.auto.factory', name: 'auto-factory', version: '1.0-beta5'
+    addAPT group: 'com.google.auto.service', name: 'auto-service', version: '1.0-rc3'
+    addAPT group: 'com.google.auto.value', name: 'auto-value', version: '1.5.1'
     addAPTReq name: 'aopalliance'
     addAPTReq name: 'asm'
     addAPTReq name: 'auto-value'
